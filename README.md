@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="main/logo.png" alt="Logo" width="80%" />
+  <img src="Screenshot_2026-01-02_20-09-33.png" alt="Logo" width="80%" />
 </p>
 
 # Open Sourced Fishing Game
