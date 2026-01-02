@@ -4,5 +4,13 @@
 
 # Open Sourced Fishing Game
 
-A simple open sourced fishing game. Includes a leveing system, shop system, different biomes & fishes!.
+A simple open sourced fishing game.
+- Easy Module system so you can add fishes, rods, biomes at ease
+- Rebrith & leveling system
+- Shop system (Buy rods, unlock biomes & sell your loot)
+
+  Please do enjoy this, this was one of my first coding project! 
+  
+
+
 Download [**here**](https://github.com/randopersononline/Free-HTML-fishing-game/blob/main/rando'sfishing.html)
