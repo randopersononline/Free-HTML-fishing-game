@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="main/logo.png" alt="Plannotator" width="80%" />
+  <img src="main/logo.png" alt="Logo" width="80%" />
 </p>
 
 # Open Sourced Fishing Game
