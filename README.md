@@ -5,4 +5,4 @@
 # Open Sourced Fishing Game
 
 A simple open sourced fishing game. Includes a leveing system, shop system, different biomes & fishes!.
-Download at (rando'sfishing.html)
+Download [**here**](https://github.com/randopersononline/Free-HTML-fishing-game/blob/main/rando'sfishing.html)
