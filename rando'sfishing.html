@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Fishing Empire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(to bottom, #87CEEB 0%, #A7D8E8 40%, #4682B4 80%, #191970 100%);
+            font-family: 'Press Start 2P', cursive;
+            color: #000;
+            min-height: 100vh;
+            user-select: none;
+            padding-bottom: 40px;
+        }
+        #game-container {
+            text-align: center;
+            margin: 20px;
+            max-width: 900px;
+            width: 100%;
+            /* Scale down the entire UI slightly on larger screens */
+            transform: scale(0.85);
+            transform-origin: top center;
+        }
+        @media (max-width: 1000px) {
+            #game-container { transform: scale(0.9); }
+        }
+        @media (max-width: 800px) {
+            #game-container { transform: scale(1); margin: 10px; }
+        }
+        #header {
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-shadow: 4px 4px 0 #000;
+            color: #FFD700;
+        }
+        #status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+            font-size: 11px;
+            background: rgba(255,255,255,0.92);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        #status div {
+            background: rgba(255,255,255,0.7);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        #level-bar {
+            width: 100%;
+            height: 25px;
+            background: #333;
+            border-radius: 15px;
+            margin: 15px 0;
+            overflow: hidden;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+        }
+        #level-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A, #CDDC39);
+            width: 0%;
+            transition: width 0.6s ease;
+            box-shadow: 0 0 20px #CDDC39;
+        }
+        #level-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 25px;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+            font-size: 12px;
+            margin-top: -25px;
+        }
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        #cast-button {
+            padding: 22px 60px;
+            font-size: 20px;
+            background: linear-gradient(#4CAF50, #388E3C);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: none;
+        }
+        #cast-button:disabled { background: #555; cursor: not-allowed; }
+        #auto-button {
+            padding: 22px 50px;
+            font-size: 18px;
+            background: linear-gradient(#FF9800, #F57C00);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.4s;
+        }
+        #auto-button.active {
+            background: linear-gradient(#F57C00, #E64A19);
+            transform: scale(1.1);
+        }
+        #shop-button {
+            padding: 15px 35px;
+            font-size: 15px;
+            background: linear-gradient(#FF9800, #F57C00);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            cursor: pointer;
+            margin: 15px;
+        }
+        #timer {
+            font-size: 16px;
+            color: #FFD700;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px #000;
+        }
+        #message {
+            background: rgba(0,0,0,0.92);
+            color: #FFD700;
+            padding: 30px 50px;
+            border-radius: 30px;
+            font-size: 18px;
+            margin: 20px 0;
+            display: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            text-shadow: 4px 4px 0 #000;
+            max-width: 95%;
+            border: 4px solid #FFD700;
+        }
+        #modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; z-index: 10;
+        }
+        #shop {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 95%; max-width: 800px; max-height: 95vh; overflow-y: auto;
+            background: linear-gradient(#FFF, #E3F2FD);
+            border: 8px double #333;
+            border-radius: 35px;
+            padding: 40px;
+            box-shadow: 0 40px 90px rgba(0,0,0,0.8);
+            display: none; z-index: 11; font-size: 11px; text-align: center;
+        }
+        #shop h2 { font-size: 24px; margin-bottom: 30px; color: #1976D2; text-shadow: 2px 2px 0 #FFF; }
+        #shop h3 { margin: 30px 0 20px; color: #333; font-size: 16px; text-decoration: underline; }
+        .section {
+            margin-bottom: 40px;
+            border: 4px solid #90CAF9;
+            padding: 25px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        #shop button {
+            display: block; width: 100%; margin: 15px 0; padding: 20px;
+            background: linear-gradient(#4CAF50, #388E3C); color: white;
+            border: none; border-radius: 20px; cursor: pointer;
+            font-family: inherit; font-size: 13px; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            transition: all 0.4s;
+        }
+        #shop button:hover:not(:disabled) {
+            background: linear-gradient(#388E3C, #2E7D32);
+            transform: translateY(-6px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        #shop button:disabled { background: #777; cursor: not-allowed; }
+        #sell-all-btn {
+            background: linear-gradient(#FF1744, #D50000) !important;
+            font-size: 18px !important; padding: 30px !important;
+        }
+        #rebirth-btn {
+            background: linear-gradient(#AB47BC, #8E24AA) !important;
+            font-size: 18px !important; padding: 30px !important;
+        }
+        #inventory {
+            margin: 40px 15px; padding: 30px; border: 8px solid #333;
+            background: rgba(255,255,255,0.97); border-radius: 30px;
+            width: 100%; max-width: 800px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        #inventory h2 { margin-bottom: 30px; font-size: 20px; color: #1976D2; }
+        #fish-list p {
+            margin: 15px 0;
+            font-size: 12px;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        footer { margin-top: 40px; font-size: 9px; color: #555; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1 id="header">Rando's Fishing Game</h1>
+      
+        <div id="status">
+            <div id="rod">Rod: Training</div>
+            <div id="biome">Biome: Shallow Waters</div>
+            <div id="level">Level: 1</div>
+            <div id="chance">Catch: 40%</div>
+            <div id="money">💵 $0</div>
+            <div id="prestige">Prestige: 0</div>
+        </div>
+      
+        <div style="position:relative;">
+            <div id="level-text">XP: 0 / 1000</div>
+            <div id="level-bar">
+                <div id="level-progress"></div>
+            </div>
+        </div>
+        <div id="timer">Casting in: 3.0s</div>
+        <div id="controls">
+            <button id="cast-button">CAST LINE 🎣</button>
+            <button id="auto-button">AUTO OFF</button>
+        </div>
+        <button id="shop-button">SHOP 🛒</button>
+      
+        <div id="message"></div>
+    </div>
+
+    <div id="modal-backdrop" onclick="closeShop()"></div>
+    <div id="shop">
+        <h2>SHOP 🛒</h2>
+      
+        <div class="section">
+            <h3>🎣 RODS</h3>
+            <div id="rod-buttons"></div>
+        </div>
+        <div class="section">
+            <h3>🌊 BIOMES</h3>
+            <div id="biome-buttons"></div>
+        </div>
+        <div class="section">
+            <h3>💰 TREASURY – SELL CATCH</h3>
+            <button id="sell-all-btn">SELL EVERYTHING</button>
+            <div id="fish-to-sell"></div>
+        </div>
+        <div class="section" id="prestige-section" style="display:none;">
+            <h3>⭐ PRESTIGE CHAMBER</h3>
+            <div id="prestige-upgrades"></div>
+            <button id="rebirth-btn">REBIRTH</button>
+        </div>
+        <button onclick="closeShop()">EXIT SHOP</button>
+    </div>
+
+    <div id="inventory">
+        <h2>🎒 INVENTORY</h2>
+        <div id="fish-list">
+            <p style="color:#888; font-style:italic;">The ocean awaits your conquest...</p>
+        </div>
+    </div>
+
+    <footer>Made by rando with ❤️ for the ultimate fishing grind</footer>
+
+    <script>
+        // (Script remains completely unchanged – all gameplay logic is identical)
+        const rodConfig = [
+            { id: 1, name: "Training", cost: 0, catchBonus: 0 },
+            { id: 2, name: "Bamboo", cost: 200, catchBonus: 0.15 },
+            { id: 3, name: "Fiberglass", cost: 1000, catchBonus: 0.35 },
+            { id: 4, name: "Carbon Fiber", cost: 5000, catchBonus: 0.60 },
+            { id: 5, name: "Iridium", cost: 20000, catchBonus: 0.90 },
+            { id: 6, name: "Master", cost: 100000, catchBonus: 1.30 },
+            { id: 7, name: "Legendary", cost: 500000, catchBonus: 1.80 }
+        ];
+        const biomeConfig = [
+            { id: 1, name: "Shallow Waters", cost: 0, lootMultiplier: 1.0 },
+            { id: 2, name: "Messy Swamp", cost: 400, lootMultiplier: 1.5 },
+            { id: 3, name: "Coral Reef", cost: 1000, lootMultiplier: 2.0 },
+            { id: 4, name: "Open Ocean", cost: 5000, lootMultiplier: 3.5 },
+            { id: 5, name: "Deep Sea Trench", cost: 25000, lootMultiplier: 6.0 },
+            { id: 6, name: "Abyssal Zone", cost: 100000, lootMultiplier: 10.0 },
+            { id: 7, name: "Mystic Void", cost: 500000, lootMultiplier: 18.0 },
+            { id: 8, name: "Eternal Depths", cost: 2000000, lootMultiplier: 30.0 }
+        ];
+        const lootConfig = [
+            { name: "Seaweed", type: "junk", value: 8, baseWeight: 30 },
+            { name: "Driftwood", type: "junk", value: 15, baseWeight: 25 },
+            { name: "Old Boot", type: "junk", value: 3, baseWeight: 20 },
+            { name: "Broken Glasses", type: "junk", value: 5, baseWeight: 15 },
+            { name: "Rusty Can", type: "junk", value: 2, baseWeight: 12 },
+            { name: "Plastic Bottle", type: "junk", value: 4, baseWeight: 10 },
+            { name: "Minnow", type: "fish", value: 20, baseWeight: 40 },
+            { name: "Pufferfish", type: "fish", value: 45, baseWeight: 35 },
+            { name: "Sardine", type: "fish", value: 80, baseWeight: 30 },
+            { name: "Herring", type: "fish", value: 150, baseWeight: 20 },
+            { name: "Tuna", type: "fish", value: 300, baseWeight: 15 },
+            { name: "Swordfish", type: "fish", value: 600, baseWeight: 10 },
+            { name: "Marlin", type: "fish", value: 1200, baseWeight: 8 },
+            { name: "Shark", type: "fish", value: 2500, baseWeight: 5 },
+            { name: "Giant Squid", type: "fish", value: 5000, baseWeight: 3 },
+            { name: "Anglerfish", type: "fish", value: 10000, baseWeight: 2 },
+            { name: "Coelacanth", type: "fish", value: 25000, baseWeight: 1 },
+            { name: "Legendary Leviathan", type: "fish", value: 100000, baseWeight: 0.5 },
+            { name: "Sunken Treasure Chest", type: "chest", value: 0, baseWeight: 3 }
+        ];
+
+        let state = {
+            money: 0,
+            currentRod: 1,
+            currentBiome: 1,
+            level: 1,
+            xp: 0,
+            prestigePoints: 0,
+            catchMultiplier: 1.0,
+            sellMultiplier: 1.0,
+            inventory: {},
+            autoFishing: false,
+            autoInterval: null
+        };
+        lootConfig.forEach(item => state.inventory[item.name] = 0);
+
+        const els = {
+            money: document.getElementById('money'),
+            rod: document.getElementById('rod'),
+            biome: document.getElementById('biome'),
+            level: document.getElementById('level'),
+            chance: document.getElementById('chance'),
+            prestige: document.getElementById('prestige'),
+            levelText: document.getElementById('level-text'),
+            progressBar: document.getElementById('level-progress'),
+            timer: document.getElementById('timer'),
+            message: document.getElementById('message'),
+            castBtn: document.getElementById('cast-button'),
+            autoBtn: document.getElementById('auto-button'),
+            shopBtn: document.getElementById('shop-button'),
+            backdrop: document.getElementById('modal-backdrop'),
+            shop: document.getElementById('shop'),
+            rodButtons: document.getElementById('rod-buttons'),
+            biomeButtons: document.getElementById('biome-buttons'),
+            fishToSell: document.getElementById('fish-to-sell'),
+            fishList: document.getElementById('fish-list'),
+            prestigeSection: document.getElementById('prestige-section'),
+            prestigeUpgrades: document.getElementById('prestige-upgrades'),
+            sellAllBtn: document.getElementById('sell-all-btn'),
+            rebirthBtn: document.getElementById('rebirth-btn')
+        };
+
+        function xpNeeded(level) {
+            return Math.floor(1000 * Math.pow(1.5, level - 1));
+        }
+        function getCurrentRod() { return rodConfig.find(r => r.id === state.currentRod); }
+        function getCurrentBiome() { return biomeConfig.find(b => b.id === state.currentBiome); }
+
+        function updateDisplays() {
+            els.money.textContent = `$${state.money.toLocaleString()}`;
+            els.rod.textContent = `Rod: ${getCurrentRod().name}`;
+            els.biome.textContent = `Biome: ${getCurrentBiome().name}`;
+            els.level.textContent = `Level: ${state.level}`;
+            els.prestige.textContent = `Prestige: ${state.prestigePoints}`;
+            const base = 0.4;
+            const rodB = getCurrentRod().catchBonus;
+            const biomeB = getCurrentBiome().lootMultiplier / 8;
+            const levelB = state.level / 80;
+            const prestigeB = state.catchMultiplier - 1;
+            const totalChance = base + rodB + biomeB + levelB + prestigeB;
+            els.chance.textContent = `Catch: ${Math.min(99, Math.round(totalChance * 100))}%`;
+            const needed = xpNeeded(state.level);
+            els.levelText.textContent = `XP: ${state.xp.toLocaleString()} / ${needed.toLocaleString()}`;
+            els.progressBar.style.width = `${(state.xp / needed) * 100}%`;
+        }
+
+        function showMessage(text, time = 5000) {
+            els.message.textContent = text;
+            els.message.style.display = 'block';
+            setTimeout(() => els.message.style.display = 'none', time);
+        }
+
+        function getLootTable() {
+            const mult = getCurrentBiome().lootMultiplier;
+            return lootConfig.map(item => ({
+                ...item,
+                weight: item.baseWeight * mult
+            }));
+        }
+
+        function weightedRandom(table) {
+            const total = table.reduce((s, i) => s + i.weight, 0);
+            let roll = Math.random() * total;
+            for (let item of table) {
+                roll -= item.weight;
+                if (roll <= 0) return item;
+            }
+            return table[0];
+        }
+
+        function openChest() {
+            const cash = Math.floor(Math.random() * 146) + 5;
+            state.money += Math.floor(cash * state.sellMultiplier);
+            return cash;
+        }
+
+        function gainXP(amount) {
+            state.xp += amount;
+            let needed = xpNeeded(state.level);
+            while (state.xp >= needed) {
+                state.xp -= needed;
+                state.level++;
+                showMessage(`🌟 LEVEL UP! You are now Level ${state.level}!`, 4000);
+                needed = xpNeeded(state.level);
+            }
+            if (state.level >= 50) els.prestigeSection.style.display = 'block';
+            updateDisplays();
+        }
+
+        function startCastTimer(callback) {
+            els.timer.style.display = 'block';
+            let timeLeft = 3.0;
+            els.timer.textContent = `Casting in: ${timeLeft.toFixed(1)}s`;
+            const timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                els.timer.textContent = `Casting in: ${timeLeft.toFixed(1)}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    els.timer.style.display = 'none';
+                    callback();
+                }
+            }, 100);
+        }
+
+        function performCast() {
+            const chance = 0.4 + getCurrentRod().catchBonus + getCurrentBiome().lootMultiplier / 8 + state.level / 80 + (state.catchMultiplier - 1);
+            if (Math.random() < chance) {
+                const table = getLootTable();
+                const loot = weightedRandom(table);
+                state.inventory[loot.name]++;
+                let msg = '';
+                let xpGain = 15;
+                if (loot.type === 'fish') {
+                    const val = Math.floor(loot.value * state.sellMultiplier);
+                    msg = `🐟 You caught a ${loot.name}! Worth $${val.toLocaleString()}`;
+                    xpGain += loot.value / 20;
+                } else if (loot.type === 'junk') {
+                    const val = Math.floor(loot.value * state.sellMultiplier);
+                    msg = `🗑️ Hooked some ${loot.name}... Still worth $${val}`;
+                    xpGain += 8;
+                } else if (loot.type === 'chest') {
+                    const cash = openChest();
+                    state.inventory[loot.name]--;
+                    msg = `🏴‍☠️ SUNKEN TREASURE! +$${cash.toLocaleString()} cash!`;
+                    xpGain += 100;
+                }
+                gainXP(Math.floor(xpGain));
+                showMessage(msg, 5500);
+                updateInventory();
+            } else {
+                showMessage('The line came back empty...', 3000);
+            }
+        }
+
+        function castLine() {
+            els.castBtn.disabled = true;
+            startCastTimer(() => {
+                performCast();
+                els.castBtn.disabled = false;
+            });
+        }
+
+        function toggleAutoFish() {
+            state.autoFishing = !state.autoFishing;
+            els.autoBtn.textContent = state.autoFishing ? 'AUTO ON' : 'AUTO OFF';
+            els.autoBtn.classList.toggle('active', state.autoFishing);
+            if (state.autoFishing) {
+                state.autoInterval = setInterval(() => {
+                    startCastTimer(performCast);
+                }, 3100);
+            } else {
+                clearInterval(state.autoInterval);
+            }
+        }
+
+        function updateInventory() {
+            els.fishList.innerHTML = '';
+            let any = false;
+            lootConfig.forEach(item => {
+                const count = state.inventory[item.name];
+                if (count > 0) {
+                    any = true;
+                    const val = item.type === 'chest' ? 0 : Math.floor(count * item.value * state.sellMultiplier);
+                    const emoji = item.type === 'fish' ? '🐟' : item.type === 'junk' ? '🗑️' : '📦';
+                    const p = document.createElement('p');
+                    p.innerHTML = `${emoji} <strong>${item.name}</strong>: ${count} ${item.type !== 'chest' ? `<span style="color:#2E7D32;">($${val.toLocaleString()})</span>` : ''}`;
+                    els.fishList.appendChild(p);
+                }
+            });
+            if (!any) els.fishList.innerHTML = '<p style="color:#666; font-style:italic;">Your haul is silent... the ocean calls.</p>';
+        }
+
+        function sellItem(name) {
+            const item = lootConfig.find(i => i.name === name);
+            if (state.inventory[name] > 0 && item.type !== 'chest') {
+                state.inventory[name]--;
+                const val = Math.floor(item.value * state.sellMultiplier);
+                state.money += val;
+                updateDisplays();
+                updateInventory();
+                updateShop();
+                showMessage(`+$${val.toLocaleString()} from ${name}`, 2000);
+            }
+        }
+
+        function sellAll() {
+            let total = 0;
+            lootConfig.forEach(item => {
+                if (item.type !== 'chest' && state.inventory[item.name] > 0) {
+                    const count = state.inventory[item.name];
+                    const val = Math.floor(item.value * state.sellMultiplier * count);
+                    total += val;
+                    state.inventory[item.name] = 0;
+                }
+            });
+            state.money += total;
+            updateDisplays();
+            updateInventory();
+            updateShop();
+            if (total > 0) {
+                showMessage(`🔥 EMPIRE LIQUIDATION! +$${total.toLocaleString()} cash inflow!`, 6000);
+            } else {
+                showMessage('Nothing to liquidate, boss.', 2500);
+            }
+        }
+
+        function buyRod(id) {
+            const rod = rodConfig.find(r => r.id === id);
+            if (state.currentRod >= id) return;
+            if (state.money >= rod.cost) {
+                state.money -= rod.cost;
+                state.currentRod = id;
+                updateDisplays();
+                updateShop();
+                showMessage(`🛠️ Forged the mighty ${rod.name} Rod!`, 4000);
+            } else {
+                showMessage(`Insufficient funds – need $${(rod.cost - state.money).toLocaleString()} more`, 3000);
+            }
+        }
+
+        function unlockBiome(id) {
+            const biome = biomeConfig.find(b => b.id === id);
+            if (state.currentBiome >= id) return;
+            if (state.money >= biome.cost) {
+                state.money -= biome.cost;
+                state.currentBiome = id;
+                updateDisplays();
+                updateShop();
+                showMessage(`🗺️ Discovered the ${biome.name}! New riches await!`, 5000);
+            } else {
+                showMessage(`Exploration fund short by $${(biome.cost - state.money).toLocaleString()}`, 3000);
+            }
+        }
+
+        function rebirth() {
+            if (state.level < 50) return;
+            const points = Math.floor(state.level / 4) + 5;
+            state.prestigePoints += points;
+            state.level = 1;
+            state.xp = 0;
+            state.currentRod = 1;
+            state.currentBiome = 1;
+            state.money = 0;
+            lootConfig.forEach(i => state.inventory[i.name] = 0);
+            updateDisplays();
+            updateInventory();
+            updateShop();
+            showMessage(`🌌 EMPIRE REBORN! Gained ${points} Prestige Points. The cycle begins anew...`, 8000);
+        }
+
+        function buyPrestige(type) {
+            const cost = type === 'catch' ? 10 : 15;
+            if (state.prestigePoints >= cost) {
+                state.prestigePoints -= cost;
+                if (type === 'catch') state.catchMultiplier += 0.06;
+                else state.sellMultiplier += 0.12;
+                updateDisplays();
+                updateShop();
+                showMessage(`✨ Eternal upgrade: +${type === 'catch' ? '6% Catch' : '12% Sell Value'} forever!`, 5000);
+            }
+        }
+
+        function updateShop() {
+            els.rodButtons.innerHTML = '';
+            rodConfig.forEach(rod => {
+                const btn = document.createElement('button');
+                if (state.currentRod >= rod.id) {
+                    btn.textContent = `${rod.name} Rod – Equipped ✅`;
+                    btn.disabled = true;
+                } else {
+                    btn.textContent = `Forge ${rod.name} Rod ($${rod.cost.toLocaleString()})`;
+                    btn.onclick = () => buyRod(rod.id);
+                }
+                els.rodButtons.appendChild(btn);
+            });
+
+            els.biomeButtons.innerHTML = '';
+            biomeConfig.forEach(biome => {
+                const btn = document.createElement('button');
+                if (state.currentBiome >= biome.id) {
+                    btn.textContent = `${biome.name} – Explored ✅`;
+                    btn.disabled = true;
+                } else {
+                    btn.textContent = `Explore ${biome.name} ($${biome.cost.toLocaleString()})`;
+                    btn.onclick = () => unlockBiome(biome.id);
+                }
+                els.biomeButtons.appendChild(btn);
+            });
+
+            els.fishToSell.innerHTML = '';
+            lootConfig.forEach(item => {
+                if (state.inventory[item.name] > 0 && item.type !== 'chest') {
+                    const btn = document.createElement('button');
+                    const val = Math.floor(item.value * state.sellMultiplier);
+                    btn.textContent = `Sell 1× ${item.name} ($${val.toLocaleString()})`;
+                    btn.onclick = () => sellItem(item.name);
+                    els.fishToSell.appendChild(btn);
+                }
+            });
+
+            els.prestigeUpgrades.innerHTML = '';
+            ['catch', 'sell'].forEach(type => {
+                const cost = type === 'catch' ? 10 : 15;
+                const btn = document.createElement('button');
+                btn.textContent = `+${type === 'catch' ? '6% Catch Chance' : '12% Sell Value'} (${cost} Prestige)`;
+                btn.className = 'prestige-upgrade';
+                btn.onclick = () => buyPrestige(type);
+                btn.disabled = state.prestigePoints < cost;
+                els.prestigeUpgrades.appendChild(btn);
+            });
+
+            els.rebirthBtn.disabled = state.level < 50;
+            els.rebirthBtn.textContent = `REBIRTH EMPIRE (+${Math.floor(state.level / 4) + 5} Prestige Points) ✨`;
+        }
+
+        function openShop() {
+            els.backdrop.style.display = 'block';
+            els.shop.style.display = 'block';
+            updateShop();
+        }
+
+        function closeShop() {
+            els.backdrop.style.display = 'none';
+            els.shop.style.display = 'none';
+        }
+
+        els.castBtn.addEventListener('click', castLine);
+        els.autoBtn.addEventListener('click', toggleAutoFish);
+        els.shopBtn.addEventListener('click', openShop);
+        els.backdrop.addEventListener('click', closeShop);
+        els.sellAllBtn.addEventListener('click', sellAll);
+        els.rebirthBtn.addEventListener('click', rebirth);
+
+        updateDisplays();
+        updateInventory();
+        updateShop();
+    </script>
+</body>
+</html>
