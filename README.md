@@ -13,4 +13,4 @@ A simple open sourced fishing game.
   
 
 
-Download [**here**](https://github.com/randopersononline/Free-HTML-fishing-game/blob/main/rando'sfishing.html)
+Download the code [**here**](https://github.com/randopersononline/Free-HTML-fishing-game/blob/main/rando'sfishing.html) !
